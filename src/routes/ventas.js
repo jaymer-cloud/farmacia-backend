@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const pool    = require('../db/conexion');
+const generarComprobantePDF = require('../utils/generarPDF');
 
 // ── POST /api/ventas — registrar venta ──
 router.post('/', async (req, res) => {
@@ -65,6 +66,42 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ── GET /api/ventas/resumen — totales generales ──
+router.get('/resumen', async (req, res) => {
+  try {
+    const resultado = await pool.query(`
+      SELECT
+        COUNT(*)                    AS total_ventas,
+        COALESCE(SUM(total), 0)    AS total_recaudado,
+        COALESCE(SUM(cantidad), 0) AS total_unidades
+      FROM ventas
+    `);
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── GET /api/ventas/:id/pdf — descargar comprobante PDF ──
+router.get('/:id/pdf', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resultado = await pool.query(
+      'SELECT * FROM ventas WHERE id = $1', [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Venta no encontrada' });
+    }
+
+    generarComprobantePDF(resultado.rows[0], res);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ── GET /api/ventas — obtener todas las ventas ──
 router.get('/', async (req, res) => {
   try {
@@ -85,21 +122,4 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// ── GET /api/ventas/resumen — totales generales ──
-router.get('/resumen', async (req, res) => {
-  try {
-    const resultado = await pool.query(`
-      SELECT
-        COUNT(*)                    AS total_ventas,
-        COALESCE(SUM(total), 0)    AS total_recaudado,
-        COALESCE(SUM(cantidad), 0) AS total_unidades
-      FROM ventas
-    `);
-    res.json(resultado.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 module.exports = router;
