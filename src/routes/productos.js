@@ -33,7 +33,13 @@ router.get('/:id', async (req, res) => {
 // ── POST /api/productos — crear nuevo ──
 router.post('/', async (req, res) => {
   try {
-    const { nombre, categoria, precio, stock_actual, stock_minimo, unidad } = req.body;
+    const nombre         = req.body.nombre;
+    const categoria      = req.body.categoria;
+    const precio         = req.body.precio;
+    const stock_actual   = req.body.stock_actual  || 0;
+    const stock_minimo   = req.body.stock_minimo  || 0;
+    const unidad         = req.body.unidad;
+    const codigo_barras  = req.body.codigo_barras || null;
 
     // Validaciones
     if (!nombre || !categoria || !precio || !unidad) {
@@ -44,10 +50,10 @@ router.post('/', async (req, res) => {
     }
 
     const resultado = await pool.query(
-      `INSERT INTO productos (nombre, categoria, precio, stock_actual, stock_minimo, unidad)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO productos (codigo_barras, nombre, categoria, precio, stock_actual, stock_minimo, unidad)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [nombre, categoria, precio, stock_actual || 0, stock_minimo || 0, unidad]
+      [codigo_barras, nombre, categoria, precio, stock_actual, stock_minimo, unidad]
     );
 
     res.status(201).json({
@@ -57,7 +63,7 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     if (error.code === '23505') {
-      return res.status(400).json({ error: 'Ya existe un producto con ese nombre' });
+      return res.status(400).json({ error: 'Ya existe un producto con ese nombre o código de barras' });
     }
     res.status(500).json({ error: error.message });
   }
@@ -67,15 +73,21 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, categoria, precio, stock_actual, stock_minimo, unidad } = req.body;
+    const nombre        = req.body.nombre;
+    const categoria     = req.body.categoria;
+    const precio        = req.body.precio;
+    const stock_actual  = req.body.stock_actual;
+    const stock_minimo  = req.body.stock_minimo;
+    const unidad        = req.body.unidad;
+    const codigo_barras = req.body.codigo_barras || null;
 
     const resultado = await pool.query(
       `UPDATE productos
-       SET nombre=$1, categoria=$2, precio=$3,
-           stock_actual=$4, stock_minimo=$5, unidad=$6
-       WHERE id=$7
+       SET codigo_barras=$1, nombre=$2, categoria=$3, precio=$4,
+           stock_actual=$5, stock_minimo=$6, unidad=$7
+       WHERE id=$8
        RETURNING *`,
-      [nombre, categoria, precio, stock_actual, stock_minimo, unidad, id]
+      [codigo_barras, nombre, categoria, precio, stock_actual, stock_minimo, unidad, id]
     );
 
     if (resultado.rows.length === 0) {
@@ -102,5 +114,24 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ── GET /api/productos/barras/:codigo — buscar por código de barras ──
+router.get('/barras/:codigo', async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const resultado  = await pool.query(
+      'SELECT * FROM productos WHERE codigo_barras = $1', [codigo]
+    );
 
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Producto no encontrado con ese código de barras'
+      });
+    }
+
+    res.json(resultado.rows[0]);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 module.exports = router;

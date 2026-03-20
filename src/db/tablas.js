@@ -6,6 +6,7 @@ async function crearTablas() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS productos (
         id             SERIAL PRIMARY KEY,
+        codigo_barras   VARCHAR(50) UNIQUE,
         nombre         VARCHAR(200) NOT NULL UNIQUE,
         categoria      VARCHAR(100) NOT NULL,
         precio         DECIMAL(10,2) NOT NULL,
