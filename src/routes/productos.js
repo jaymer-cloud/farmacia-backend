@@ -6,7 +6,7 @@ const pool       = require('../db/conexion');
 router.get('/', async (req, res) => {
   try {
     const resultado = await pool.query(
-      'SELECT * FROM productos ORDER BY id ASC'
+      'SELECT * FROM productos WHERE activo = true ORDER BY id ASC'
     );
     res.json(resultado.rows);
   } catch (error) {
@@ -108,8 +108,20 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM productos WHERE id = $1', [id]);
-    res.json({ mensaje: 'Producto eliminado correctamente' });
+
+    const resultado = await pool.query(
+      'UPDATE productos SET activo = false WHERE id = $1 RETURNING nombre',
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    res.json({
+      mensaje: 'Producto "' + resultado.rows[0].nombre + '" desactivado correctamente'
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
