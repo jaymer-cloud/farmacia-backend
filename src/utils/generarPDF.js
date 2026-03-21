@@ -18,18 +18,27 @@ function generarComprobantePDF(venta, res) {
   let   y      = 20;
 
   // ── Logo y nombre ──
-  doc.fontSize(18).text('🏥', 20, y, { align: 'center', width: ancho });
-  y += 24;
+  try {
+    var path = require('path');
+    var logoPath = path.join(__dirname, 'logo.png');
+    doc.image(logoPath, 20, y, { width: 50, align: 'center' });
+    y += 58;
+  } catch(e) {
+    y += 10;
+  }
 
   doc.fontSize(11).fillColor(verde).font('Helvetica-Bold')
-     .text('FARMACIA SAN JOSÉ', 20, y, { align: 'center', width: ancho });
+     .text('BOTICA Celifarma', 20, y, { align: 'center', width: ancho });
   y += 14;
 
   doc.fontSize(7).fillColor(gris).font('Helvetica')
-     .text('RUC: 20123456789', 20, y, { align: 'center', width: ancho });
+     .text('RUC: 10479593677', 20, y, { align: 'center', width: ancho });
   y += 10;
 
-  doc.text('Jr. Santillana 1503, Huanta — Tel: 914249436', 20, y, { align: 'center', width: ancho });
+  doc.text('Av. Mariscal Castilla N° 5013 - Huanta', 20, y, { align: 'center', width: ancho });
+  y += 10;
+
+  doc.text('Tel: 914775818', 20, y, { align: 'center', width: ancho });
   y += 14;
 
   // ── Línea divisoria ──
