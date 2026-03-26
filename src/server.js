@@ -1,37 +1,28 @@
-const express     = require('express');
-const cors        = require('cors');
+const express  = require('express');
+const cors     = require('cors');
 require('dotenv').config();
 
-const crearTablas       = require('./db/tablas');
-const rutasProductos    = require('./routes/productos');
-const rutasVentas       = require('./routes/ventas');
+const crearTablas    = require('./db/tablas');
+const rutasProductos = require('./routes/productos');
+const rutasVentas    = require('./routes/ventas');
+const rutasAuth      = require('./routes/auth');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Ruta principal
 app.get('/', (req, res) => {
-  res.json({
-    mensaje:  '🏥 Farmacia API v3.0',
-    estado:   'ok',
-    rutas: {
-      productos: '/api/productos',
-      ventas:    '/api/ventas',
-      resumen:   '/api/ventas/resumen'
-    }
-  });
+  res.json({ mensaje: '🏥 BOTICA Celifarma API v4.0', estado: 'ok' });
 });
 
-// Rutas de la API
+// Rutas públicas
+app.use('/api/auth',     rutasAuth);
+app.use('/api/ventas',   rutasVentas);
 app.use('/api/productos', rutasProductos);
-app.use('/api/ventas',    rutasVentas);
 
-// Iniciar servidor
 app.listen(PORT, async () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Servidor Celifarma corriendo en http://localhost:${PORT}`);
   await crearTablas();
 });
